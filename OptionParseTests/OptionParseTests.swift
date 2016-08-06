@@ -11,89 +11,79 @@ import XCTest
 
 class OptionParseTests: XCTestCase {
     
-    func testOptionInit() {
-        
-        var option = Option(type: .Toggle, short: nil, long: nil, handler: {_ in })
-        XCTAssertNil(option, "Should not have option without flags")
-        
-        option = Option(type: .Toggle, short: nil, long: "", handler: {_ in })
-        XCTAssertNil(option, "Should not have option without flags")
-        
-        option = Option(type: .Toggle, short: "f", long: nil, handler: {_ in})
-        XCTAssertNotNil(option, "Should have option with short specifier")
-        
-        option = Option(type: .Toggle, short: "f", long: "foobar", handler: {_ in})
-        XCTAssertNotNil(option, "Made a valid option")
-    }
-    
     func testToggleOptionParse() {
         var handlerRan: Bool = false
-        let option = Option(type: .Toggle, short: "f", long: "foobar") { val in
+        let option = Option(name: "foobar", shortName: "f", usage: "Pass to foo some bars") { val in
             handlerRan = true
         }
-        XCTAssertNotNil(option)
+        
+        let helpMessage = "--foobar, -f\n\n\tPass to foo some bars\n"
+        
+        XCTAssertEqual(helpMessage, option.helpMessage(0))
         
         var arguments: [String] = []
-        assertParseError(try option!.processArguments(&arguments), .NoArguments)
+        assertParseError(try option.processArguments(&arguments), .NoArguments)
         
         arguments = ["f"]
-        assertParseError(try option!.processArguments(&arguments), .NoFlag)
+        assertParseError(try option.processArguments(&arguments), .NoFlag)
         
         arguments = ["-d"]
-        try! option!.processArguments(&arguments)
+        try! option.processArguments(&arguments)
         XCTAssertEqual(arguments, ["-d"], "No arguments should have been processed")
         XCTAssertFalse(handlerRan)
         
         arguments = ["-f"]
-        try! option!.processArguments(&arguments)
+        try! option.processArguments(&arguments)
         XCTAssertEqual(arguments, [], "Argument should have been processed")
         XCTAssertTrue(handlerRan)
         
         arguments = ["--foobar"]
         handlerRan = false
-        try! option!.processArguments(&arguments)
+        try! option.processArguments(&arguments)
         XCTAssertEqual(arguments, [], "Argument should have been processed")
         XCTAssertTrue(handlerRan)
     }
     
     func testParameterOptionParse() {
         var passedParam: String? = nil
-        let option = Option(type: .Parameter, short: "f", long: "foobar") { val in
+        let option = Option(name: "foobar", shortName: "f", parameter: "some-bars", usage: "Foo these specific bars") { val in
             passedParam = val
         }
-        XCTAssertNotNil(option)
+        
+        let helpMessage = "--foobar, -f <some-bars>\n\n\tFoo these specific bars\n"
+        XCTAssertEqual(helpMessage, option.helpMessage(0))
         
         var arguments: [String] = []
-        assertParseError(try option!.processArguments(&arguments), .NoArguments)
+        assertParseError(try option.processArguments(&arguments), .NoArguments)
         
         arguments = ["f"]
-        assertParseError(try option!.processArguments(&arguments), .NoFlag)
+        assertParseError(try option.processArguments(&arguments), .NoFlag)
         
         arguments = ["-d"]
-        try! option!.processArguments(&arguments)
+        try! option.processArguments(&arguments)
         XCTAssertEqual(arguments, ["-d"], "No arguments should have been processed")
         XCTAssertNil(passedParam)
         
         arguments = ["-f"]
-        assertParseError(try option!.processArguments(&arguments), .MissingParameter(param: "foobar"))
+        assertParseError(try option.processArguments(&arguments), .MissingParameter(param: "foobar"))
         XCTAssertEqual(arguments, ["-f"], "Argument should not have been processed")
         XCTAssertNil(passedParam)
         
         arguments = ["--foobar"]
         passedParam = nil
-        assertParseError(try option!.processArguments(&arguments), .MissingParameter(param: "foobar"))
+        assertParseError(try option.processArguments(&arguments), .MissingParameter(param: "foobar"))
         XCTAssertEqual(arguments, ["--foobar"], "Argument should not have been processed")
         XCTAssertNil(passedParam)
         
         arguments = ["-f", "Param"]
         passedParam = nil
-        try! option!.processArguments(&arguments)
+        try! option.processArguments(&arguments)
         XCTAssertEqual(arguments, [], "Argument should have been processed")
         XCTAssertEqual(passedParam, "Param")
         
         arguments = ["--foobar", "Param"]
         passedParam = nil
-        try! option!.processArguments(&arguments)
+        try! option.processArguments(&arguments)
         XCTAssertEqual(arguments, [], "Argument should have been processed")
         XCTAssertEqual(passedParam, "Param")
 

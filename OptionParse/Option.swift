@@ -8,18 +8,13 @@
 
 import Foundation
 
-public enum OptionType {
-    case Toggle
-    case Parameter
-}
-
-public enum OptionParseError: ErrorType, Equatable {
+enum OptionParseError: ErrorType, Equatable {
     case NoArguments
     case NoFlag
     case MissingParameter(param: String)
 }
 
-public func ==(a: OptionParseError, b: OptionParseError) -> Bool {
+func ==(a: OptionParseError, b: OptionParseError) -> Bool {
     switch (a, b) {
     case (.NoFlag, .NoFlag): return true
     case (.NoArguments, .NoArguments): return true
@@ -29,25 +24,46 @@ public func ==(a: OptionParseError, b: OptionParseError) -> Bool {
 }
 
 
-public struct Option {
+
+struct Option {
+    typealias OptionHandler = String? -> Void
     
-    public typealias OptionHandler = String? -> Void
-    
-    private let short: String? // Store it as a string for parsing convenience
-    private let long: String?
-    private let type: OptionType
+    private let name: String
+    private let shortName: Character?
     private let handler: OptionHandler
+    private let usage: String
+    private let parameter: String?
     
-    public init?(type: OptionType, short: Character? = nil, long: String? = nil, handler: OptionHandler) {
-        guard short != nil || (long != nil && long!.characters.count > 0) else {
-            assert(false, "Must provide at least one specifier for an option")
-            return nil
+    init(name: String, shortName: Character? = nil, parameter: String? = nil, usage: String, handler: OptionHandler) {
+        self.name = name
+        self.shortName = shortName
+        self.usage = usage
+        self.handler = handler
+        self.parameter = parameter
+    }
+    
+    func helpMessage(tabDepth: Int) -> String {
+        var lines: [String] = []
+        var firstLine = "--\(name)"
+        if let shortName = shortName {
+            firstLine += ", -\(shortName)"
         }
         
-        self.type = type
-        self.short = short.map { String($0) }
-        self.long = long
-        self.handler = handler
+        if let parameter = parameter {
+            firstLine += " <\(parameter)>"
+        }
+        lines.append(firstLine)
+        lines.append("")
+        lines.append("\t\(usage)")
+        lines.append("")
+        
+        let prefix = Repeat(count: tabDepth, repeatedValue: "\t").joinWithSeparator("")
+        return lines.map { line in
+            guard line.characters.count > 0 else {
+                return line
+            }
+            return prefix + line
+        }.joinWithSeparator("\n")
     }
     
     func processArguments(inout arguments: [String]) throws {
@@ -56,29 +72,27 @@ public struct Option {
         }
         
         if option.hasPrefix("--") {
-            guard let long = long where option == "--\(long)" else {
+            guard option == "--\(name)" else {
                 return
             }
         } else if option.hasPrefix("-") {
-            guard let short = short where option == "-\(short)" else {
+            guard let shortName = shortName where option == "-\(shortName)" else {
                 return
             }
         } else {
             throw OptionParseError.NoFlag
         }
         
-        
-        switch type {
-        case .Toggle:
-            arguments.removeFirst()
-            handler(nil)
-        case .Parameter:
+        if parameter != nil {
             guard arguments.count > 1 else {
-                throw OptionParseError.MissingParameter(param: long ?? short!)
+                throw OptionParseError.MissingParameter(param: name)
             }
             arguments.removeFirst()
             let parameter = arguments.removeFirst()
             handler(parameter)
+        } else {
+            arguments.removeFirst()
+            handler(nil)
         }
     }
 }
