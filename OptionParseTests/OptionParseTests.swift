@@ -16,11 +16,11 @@ class OptionParseTests: XCTestCase {
         var option = Option(type: .Toggle, short: nil, long: nil, handler: {_ in })
         XCTAssertNil(option, "Should not have option without flags")
         
-        option = Option(type: .Toggle, short: "", long: "", handler: {_ in })
+        option = Option(type: .Toggle, short: nil, long: "", handler: {_ in })
         XCTAssertNil(option, "Should not have option without flags")
         
-        option = Option(type: .Toggle, short: "ff", long: nil, handler: {_ in})
-        XCTAssertNil(option, "Should not have option with short specifier longer than 1 character")
+        option = Option(type: .Toggle, short: "f", long: nil, handler: {_ in})
+        XCTAssertNotNil(option, "Should have option with short specifier")
         
         option = Option(type: .Toggle, short: "f", long: "foobar", handler: {_ in})
         XCTAssertNotNil(option, "Made a valid option")

@@ -11,7 +11,6 @@
 		AA1BF1271D543CB100BD82D4 /* OptionParse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1BF11C1D543CB100BD82D4 /* OptionParse.framework */; };
 		AA1BF12C1D543CB100BD82D4 /* OptionParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1BF12B1D543CB100BD82D4 /* OptionParseTests.swift */; };
 		AA1BF1371D543D0700BD82D4 /* Option.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1BF1361D543D0700BD82D4 /* Option.swift */; };
-		AA1BF1391D5444CF00BD82D4 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1BF1381D5444CF00BD82D4 /* Utils.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,7 +31,6 @@
 		AA1BF12B1D543CB100BD82D4 /* OptionParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionParseTests.swift; sourceTree = "<group>"; };
 		AA1BF12D1D543CB100BD82D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA1BF1361D543D0700BD82D4 /* Option.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Option.swift; sourceTree = "<group>"; };
-		AA1BF1381D5444CF00BD82D4 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,7 +76,6 @@
 				AA1BF11F1D543CB100BD82D4 /* OptionParse.h */,
 				AA1BF1211D543CB100BD82D4 /* Info.plist */,
 				AA1BF1361D543D0700BD82D4 /* Option.swift */,
-				AA1BF1381D5444CF00BD82D4 /* Utils.swift */,
 			);
 			path = OptionParse;
 			sourceTree = "<group>";
@@ -200,7 +197,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA1BF1391D5444CF00BD82D4 /* Utils.swift in Sources */,
 				AA1BF1371D543D0700BD82D4 /* Option.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -470,6 +466,7 @@
 				AA1BF13B1D54468100BD82D4 /* Testing */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		AA1BF1331D543CB100BD82D4 /* Build configuration list for PBXNativeTarget "OptionParseTests" */ = {
 			isa = XCConfigurationList;
@@ -479,6 +476,7 @@
 				AA1BF13C1D54468100BD82D4 /* Testing */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

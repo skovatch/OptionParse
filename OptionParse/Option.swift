@@ -33,23 +33,19 @@ public struct Option {
     
     public typealias OptionHandler = String? -> Void
     
-    private let short: String?
+    private let short: String? // Store it as a string for parsing convenience
     private let long: String?
     private let type: OptionType
     private let handler: OptionHandler
     
-    public init?(type: OptionType, short: String? = nil, long: String? = nil, handler: OptionHandler) {
-        guard !isNilOrEmpty(short) || !isNilOrEmpty(long) else {
+    public init?(type: OptionType, short: Character? = nil, long: String? = nil, handler: OptionHandler) {
+        guard short != nil || (long != nil && long!.characters.count > 0) else {
             assert(false, "Must provide at least one specifier for an option")
-            return nil
-        }
-        guard short == nil || short!.characters.count == 1 else {
-            assert(false, "Short specifier must be only one character long")
             return nil
         }
         
         self.type = type
-        self.short = short
+        self.short = short.map { String($0) }
         self.long = long
         self.handler = handler
     }
