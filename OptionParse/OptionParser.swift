@@ -88,8 +88,10 @@ public struct OptionParser {
     private var flags: [String : Flag] = [:]
     private var shortNameMap: [Character : String] = [:]
 
-    // TODO: error on duplicate toggles/flags
     mutating public func flag(name: String, shortName: Character? = nil, valueName: String, usage: String) -> OptionValue<String?> {
+        guard flags[name] == nil && toggles[name] == nil else {
+            fatalError("Duplicate option during setup. This is programmer error")
+        }
         let flag = Flag(name: name, shortName: shortName, valueName: valueName, usage: usage)
         flags[name] = flag
         if let shortName = shortName {
@@ -99,6 +101,9 @@ public struct OptionParser {
     }
 
     mutating public func toggle(name: String, shortName: Character? = nil, usage: String) -> OptionValue<Bool> {
+        guard flags[name] == nil && toggles[name] == nil else {
+            fatalError("Duplicate option during setup. This is programmer error")
+        }
         let toggle = Toggle(name: name, shortName: shortName, usage: usage)
         toggles[name] = toggle
         if let shortName = shortName {
