@@ -12,7 +12,7 @@ import OptionParse
 // Sample app. Takes in an unnamed argument that it will echo to stdout, or if '--file' is supplied, to the given file.
 // If '--loud' is given, it prints it in all caps.
 
-var parser = OptionParser(usage: "A sample app!")
+var parser = OptionParser(name: "OptionParseSample", usage: "A sample app!")
 let file = parser.flag("file", valueName: "file-name", usage: "Write to the file specified instead of stdout")
 let loud = parser.toggle("loud", usage: "Makes the message all caps")
 

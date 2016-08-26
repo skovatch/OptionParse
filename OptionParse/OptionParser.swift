@@ -19,7 +19,9 @@ public enum OptionParseError: ErrorType {
 public struct OptionParser {
     
     private let usage: String
-    public init(usage: String){
+    private let name: String
+    public init(name: String, usage: String){
+        self.name = name
         self.usage = usage
     }
 
@@ -217,7 +219,7 @@ public struct OptionParser {
 
     private var usageMessage: String {
         // First construct the info line
-        var msg = "usage: OptionParseSample "
+        var msg = "usage: \(name) "
         let components = sampleAndHelpComponents
         msg += components.map { $0.0 }.joinWithSeparator(" ")
         msg += "\n\n\(usage.terminalWidthLines(withTabDepth: 1))\n\n"
