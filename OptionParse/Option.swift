@@ -30,16 +30,10 @@ extension Option {
     var helpMessage: String {
         var lines: [String] = []
 
-        lines.append(descriptor)
-        lines.append("\t\(usage)")
+        lines.append("\t\(descriptor)")
+        lines.append(usage.terminalWidthLines(withTabDepth: 2))
         lines.append("")
-        let prefix = "\t"
-        return lines.map { line in
-            guard line.characters.count > 0 else {
-                return line
-            }
-            return prefix + line
-        }.joinWithSeparator("\n")
+        return lines.joinWithSeparator("\n")
     }
 
     func updateValue(val: Value) {

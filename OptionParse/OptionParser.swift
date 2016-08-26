@@ -220,12 +220,36 @@ public struct OptionParser {
         var msg = "usage: OptionParseSample "
         let components = sampleAndHelpComponents
         msg += components.map { $0.0 }.joinWithSeparator(" ")
-        msg += "\n\n\t\(usage)\n\n"
+        msg += "\n\n\(usage.terminalWidthLines(withTabDepth: 1))\n\n"
 
         // Then the detailed messages
         msg += components.map { $0.1 }.joinWithSeparator("\n")
         return msg
     }
+}
+
+extension String {
+    // Helper that splits the string into lines of max width 80 characters. Indents each line by 'tabDepth' tabs.
+    func terminalWidthLines(withTabDepth tabDepth: Int) -> String {
+        var remainingString = self
+        var lines: [String] = []
+        while remainingString.characters.count > 80 {
+            guard let range = remainingString.rangeOfCharacterFromSet(NSCharacterSet.whitespaceCharacterSet(), options: .BackwardsSearch, range: remainingString.startIndex..<remainingString.startIndex.advancedBy(80)) else {
+                lines.append(remainingString)
+                remainingString = ""
+                break
+            }
+
+            lines.append(remainingString.substringToIndex(range.startIndex))
+            remainingString = remainingString.substringFromIndex(range.endIndex)
+        }
+
+        if !remainingString.isEmpty {
+            lines.append(remainingString)
+        }
 
 
+
+        return lines.map { Repeat(count: tabDepth, repeatedValue: "\t").joinWithSeparator("") + $0 }.joinWithSeparator("\n")
+    }
 }
