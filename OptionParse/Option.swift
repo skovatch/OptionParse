@@ -8,45 +8,164 @@
 
 import Foundation
 
-struct Option {
-    typealias OptionHandler = String? -> Void
-    
-    let name: String
-    let shortName: Character?
-    let handler: OptionHandler
-    let usage: String
-    let parameter: String?
-    var requiresParameter: Bool { return parameter != nil }
-    
-    init(name: String, shortName: Character? = nil, parameter: String? = nil, usage: String, handler: OptionHandler) {
-        self.name = name
-        self.shortName = shortName
-        self.usage = usage
-        self.handler = handler
-        self.parameter = parameter
+public class OptionValue<T> {
+    public var value: T
+    private init(_ value: T) {
+        self.value = value
     }
-    
-    func helpMessage(tabDepth: Int) -> String {
+}
+
+protocol Option {
+    associatedtype Value
+
+    var name: String { get }
+    var usage: String { get } // Paragraph describing usage
+    var descriptor: String { get } // String describing the option, e.g. "--foo, -f <value>"
+    var sample: String { get } // String showing usage, e.g., "[--foo | -f <value>]"
+
+    var value: OptionValue<Value> { get }
+}
+
+extension Option {
+    var helpMessage: String {
         var lines: [String] = []
-        var firstLine = "--\(name)"
-        if let shortName = shortName {
-            firstLine += ", -\(shortName)"
-        }
-        
-        if let parameter = parameter {
-            firstLine += " <\(parameter)>"
-        }
-        lines.append(firstLine)
-        lines.append("")
+
+        lines.append(descriptor)
         lines.append("\t\(usage)")
         lines.append("")
-        
-        let prefix = Repeat(count: tabDepth, repeatedValue: "\t").joinWithSeparator("")
+        let prefix = "\t"
         return lines.map { line in
             guard line.characters.count > 0 else {
                 return line
             }
             return prefix + line
         }.joinWithSeparator("\n")
-    }    
+    }
+
+    func updateValue(val: Value) {
+        value.value = val
+    }
+}
+
+struct Toggle: Option {
+    let name: String
+    let shortName: Character?
+    let usage: String
+    let value: OptionValue<Bool> = OptionValue(false)
+
+    init(name: String, shortName: Character? = nil, usage: String) {
+        self.name = name
+        self.shortName = shortName
+        self.usage = usage
+    }
+
+    var descriptor: String {
+        var line = "--\(name)"
+        if let shortName = shortName {
+            line += ", -\(shortName)"
+        }
+        return line
+    }
+
+    var sample: String {
+        var line = "[--\(name)"
+        if let shortName = shortName {
+            line += " | -\(shortName)"
+        }
+        line += "]"
+        return line
+    }
+}
+
+struct Flag: Option {
+    let name: String
+    let shortName: Character?
+    let usage: String
+    let valueName: String
+    let value: OptionValue<String?> = OptionValue(nil)
+    
+    init(name: String, shortName: Character? = nil, valueName: String, usage: String) {
+        self.name = name
+        self.shortName = shortName
+        self.usage = usage
+        self.valueName = valueName
+    }
+
+    var descriptor: String {
+        var line = "--\(name)"
+        if let shortName = shortName {
+            line += ", -\(shortName)"
+        }
+        line += " <\(valueName)>"
+
+        return line
+    }
+
+    var sample: String {
+        var line = "[--\(name)"
+        if let shortName = shortName {
+            line += " | -\(shortName)"
+        }
+        line += " <\(valueName)>"
+        line += "]"
+
+        return line
+    }
+}
+
+struct OptionalArgument: Option {
+    let name: String
+    let usage: String
+    let value: OptionValue<String?> = OptionValue(nil)
+
+    init(name: String, usage: String) {
+        self.name = name
+        self.usage = usage
+    }
+
+    var descriptor: String {
+        return "<\(name)>"
+    }
+
+    var sample: String {
+        return "[\(descriptor)]"
+    }
+}
+
+struct RequiredArgument: Option {
+    let name: String
+    let usage: String
+    let value: OptionValue<String> = OptionValue("")
+
+    init(name: String, required: Bool = false, usage: String) {
+        self.name = name
+        self.usage = usage
+    }
+
+    var descriptor: String {
+        return "<\(name)>"
+    }
+
+    var sample: String {
+        return descriptor
+    }
+}
+
+struct RemainderArgument: Option {
+    let name: String
+    let usage: String
+    let value: OptionValue<[String]> = OptionValue([])
+
+    init(name: String, required: Bool = false, usage: String) {
+        self.name = name
+        self.usage = usage
+    }
+
+    var descriptor: String {
+        return "<\(name)>"
+    }
+
+    var sample: String {
+        return "\(descriptor)..."
+    }
 }

@@ -9,110 +9,79 @@
 import XCTest
 @testable import OptionParse
 
+extension OptionParseError: Equatable {}
+public func ==(a: OptionParseError, b: OptionParseError) -> Bool {
+    switch (a, b) {
+    case (.NoOptions, .NoOptions): return true
+    case (.MissingValue(let msg1), .MissingValue(let msg2)): return msg1 == msg2
+    case (.MissingArgument(let msg1), .MissingArgument(let msg2)): return msg1 == msg2
+    case (.UnknownOption(let opt1), .UnknownOption(let opt2)): return opt1 == opt2
+    case (.UnknownArguments(let args1), .UnknownArguments(let args2)): return args1 == args2
+    default: return false
+    }
+}
+
+
 class OptionParseTests: XCTestCase {
     
     func testToggleOptionParse() {
-        var handlerRan: Bool = false
-        var leftoverVars: [String] = []
-        let option = Option(name: "foobar", shortName: "f", usage: "Pass to foo some bars") { val in
-            handlerRan = true
-        }
-        var parser = OptionParser()
-        parser.on(option)
-        
-        let helpMessage = "--foobar, -f\n\n\tPass to foo some bars\n"
-        XCTAssertEqual(helpMessage, option.helpMessage(0))
-        
+        var parser = OptionParser(usage: "")
+        let foo = parser.toggle("foobar", shortName: "f", usage: "Pass to foo some bars")
+
         var arguments: [String] = []
-        assertParseError(try parser.parse(arguments), .NoArguments)
+        assertParseError(try parser._parse(arguments), .NoOptions)
+        XCTAssertFalse(foo.value)
         
         arguments = ["f"]
-        assertParseError(try parser.parse(arguments), .UnknownParameters(params: ["f"]))
-        
-        parser.leftover { vars in
-            leftoverVars = vars
-        }
-        
-        try! parser.parse(arguments)
-        XCTAssertEqual(leftoverVars, arguments)
-        leftoverVars.removeAll()
-        
+        assertParseError(try parser._parse(arguments), .UnknownArguments(arguments))
+        XCTAssertFalse(foo.value)
+
         arguments = ["-d"]
-        assertParseError(try parser.parse(arguments), .UnknownFlag(flag: "-d"))
-        XCTAssertFalse(handlerRan)
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
+        assertParseError(try parser._parse(arguments), .UnknownOption("-d"))
+        XCTAssertFalse(foo.value)
+
         arguments = ["-f"]
-        try! parser.parse(arguments)
-        XCTAssertTrue(handlerRan)
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
+        try! parser._parse(arguments)
+        XCTAssertTrue(foo.value)
+        foo.value = false
+
         arguments = ["--foobar"]
-        handlerRan = false
-        try! parser.parse(arguments)
-        XCTAssertTrue(handlerRan)
-        XCTAssertTrue(leftoverVars.isEmpty)
+        try! parser._parse(arguments)
+        XCTAssertTrue(foo.value)
     }
     
     func testParameterOptionParse() {
-        var passedParam: String? = nil
-        var leftoverVars: [String] = []
-        let option = Option(name: "foobar", shortName: "f", parameter: "some-bars", usage: "Foo these specific bars") { val in
-            passedParam = val
-        }
-        var parser = OptionParser()
-        parser.on(option)
-        
-        let helpMessage = "--foobar, -f <some-bars>\n\n\tFoo these specific bars\n"
-        XCTAssertEqual(helpMessage, option.helpMessage(0))
-        
+        var parser = OptionParser(usage: "")
+
+        let foo = parser.flag("foobar", shortName: "f", valueName: "some-bars", usage: "Foo these specific bars")
+
         var arguments: [String] = []
-        assertParseError(try parser.parse(arguments), .NoArguments)
+        assertParseError(try parser._parse(arguments), .NoOptions)
         
         arguments = ["f"]
-        assertParseError(try parser.parse(arguments), .UnknownParameters(params: ["f"]))
-        
-        parser.leftover { vars in
-            leftoverVars = vars
-        }
-        
-        try! parser.parse(arguments)
-        XCTAssertEqual(leftoverVars, arguments)
-        leftoverVars.removeAll()
-        
-        arguments = ["-d"]
-        assertParseError(try parser.parse(arguments), .UnknownFlag(flag: "-d"))
-        XCTAssertNil(passedParam)
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
-        arguments = ["-f"]
-        assertParseError(try parser.parse(arguments), .MissingParameter(param: "some-bars"))
-        XCTAssertNil(passedParam)
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
-        arguments = ["--foobar"]
-        assertParseError(try parser.parse(arguments), .MissingParameter(param: "some-bars"))
-        XCTAssertNil(passedParam)
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
-        arguments = ["-f", "Param"]
-        passedParam = nil
-        try! parser.parse(arguments)
-        XCTAssertEqual(passedParam, "Param")
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
-        arguments = ["--foobar", "Param"]
-        passedParam = nil
-        try! parser.parse(arguments)
-        XCTAssertEqual(passedParam, "Param")
-        XCTAssertTrue(leftoverVars.isEmpty)
-        
-        arguments = ["--foobar", "Param", "Extra", "stuff"]
-        passedParam = nil
-        try! parser.parse(arguments)
-        XCTAssertEqual(passedParam, "Param")
-        XCTAssertEqual(leftoverVars, ["Extra", "stuff"])
+        assertParseError(try parser._parse(arguments), .UnknownArguments(arguments))
 
+        arguments = ["-d"]
+        assertParseError(try parser._parse(arguments), .UnknownOption("-d"))
+
+        arguments = ["-f"]
+        assertParseError(try parser._parse(arguments), .MissingValue("foobar"))
+
+        arguments = ["--foobar"]
+        assertParseError(try parser._parse(arguments), .MissingValue("foobar"))
+
+        arguments = ["-f", "Param"]
+        try! parser._parse(arguments)
+        XCTAssertEqual(foo.value!, "Param")
+
+        arguments = ["--foobar", "Param"]
+        try! parser._parse(arguments)
+        XCTAssertEqual(foo.value!, "Param")
+
+        let remainder = parser.remainder("remain", usage: "stuff")
+        arguments = ["--foobar", "Param", "Extra", "stuff"]
+        try! parser._parse(arguments)
+        XCTAssertEqual(remainder.value, ["Extra", "stuff"])
     }
 
     
