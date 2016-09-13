@@ -25,7 +25,7 @@ public func ==(a: OptionParseError, b: OptionParseError) -> Bool {
 class OptionParseTests: XCTestCase {
     
     func testToggleOptionParse() {
-        var parser = OptionParser(usage: "")
+        var parser = OptionParser(name: "test", usage: "")
         let foo = parser.toggle("foobar", shortName: "f", usage: "Pass to foo some bars")
 
         var arguments: [String] = []
@@ -51,7 +51,7 @@ class OptionParseTests: XCTestCase {
     }
     
     func testParameterOptionParse() {
-        var parser = OptionParser(usage: "")
+        var parser = OptionParser(name: "test", usage: "")
 
         let foo = parser.flag("foobar", shortName: "f", valueName: "some-bars", usage: "Foo these specific bars")
 
