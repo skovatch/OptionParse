@@ -24,15 +24,15 @@ do {
     exit(1)
 }
 
-var stringToPrint: String = string.value
-if loud.value {
-    stringToPrint = stringToPrint.uppercaseString
+var stringToPrint: String = string.v
+if loud.v {
+    stringToPrint = stringToPrint.uppercased()
 }
 
-let fileHandle: NSFileHandle
-if let fileName = file.value {
-    let path = (NSFileManager.defaultManager().currentDirectoryPath as NSString).stringByAppendingPathComponent(fileName)
-    NSFileManager.defaultManager().createFileAtPath(path, contents: stringToPrint.dataUsingEncoding(NSUTF8StringEncoding)!, attributes: nil)
+let fileHandle: FileHandle
+if let fileName = file.v {
+    let path = (FileManager.default.currentDirectoryPath as NSString).appendingPathComponent(fileName)
+    FileManager.default.createFile(atPath: path, contents: stringToPrint.data(using: .utf8)!, attributes: nil)
 } else {
     print(stringToPrint)
 }

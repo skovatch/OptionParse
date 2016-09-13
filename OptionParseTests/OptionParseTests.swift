@@ -12,11 +12,11 @@ import XCTest
 extension OptionParseError: Equatable {}
 public func ==(a: OptionParseError, b: OptionParseError) -> Bool {
     switch (a, b) {
-    case (.NoOptions, .NoOptions): return true
-    case (.MissingValue(let msg1), .MissingValue(let msg2)): return msg1 == msg2
-    case (.MissingArgument(let msg1), .MissingArgument(let msg2)): return msg1 == msg2
-    case (.UnknownOption(let opt1), .UnknownOption(let opt2)): return opt1 == opt2
-    case (.UnknownArguments(let args1), .UnknownArguments(let args2)): return args1 == args2
+    case (.noOptions, .noOptions): return true
+    case (.missingValue(let msg1), .missingValue(let msg2)): return msg1 == msg2
+    case (.missingArgument(let msg1), .missingArgument(let msg2)): return msg1 == msg2
+    case (.unknownOption(let opt1), .unknownOption(let opt2)): return opt1 == opt2
+    case (.unknownArguments(let args1), .unknownArguments(let args2)): return args1 == args2
     default: return false
     }
 }
@@ -29,25 +29,25 @@ class OptionParseTests: XCTestCase {
         let foo = parser.toggle("foobar", shortName: "f", usage: "Pass to foo some bars")
 
         var arguments: [String] = []
-        assertParseError(try parser._parse(arguments), .NoOptions)
-        XCTAssertFalse(foo.value)
+        assertParseError(try parser._parse(arguments), .noOptions)
+        XCTAssertFalse(foo.v)
         
         arguments = ["f"]
-        assertParseError(try parser._parse(arguments), .UnknownArguments(arguments))
-        XCTAssertFalse(foo.value)
+        assertParseError(try parser._parse(arguments), .unknownArguments(arguments))
+        XCTAssertFalse(foo.v)
 
         arguments = ["-d"]
-        assertParseError(try parser._parse(arguments), .UnknownOption("-d"))
-        XCTAssertFalse(foo.value)
+        assertParseError(try parser._parse(arguments), .unknownOption("-d"))
+        XCTAssertFalse(foo.v)
 
         arguments = ["-f"]
         try! parser._parse(arguments)
-        XCTAssertTrue(foo.value)
-        foo.value = false
+        XCTAssertTrue(foo.v)
+        foo.v = false
 
         arguments = ["--foobar"]
         try! parser._parse(arguments)
-        XCTAssertTrue(foo.value)
+        XCTAssertTrue(foo.v)
     }
     
     func testParameterOptionParse() {
@@ -56,36 +56,36 @@ class OptionParseTests: XCTestCase {
         let foo = parser.flag("foobar", shortName: "f", valueName: "some-bars", usage: "Foo these specific bars")
 
         var arguments: [String] = []
-        assertParseError(try parser._parse(arguments), .NoOptions)
+        assertParseError(try parser._parse(arguments), .noOptions)
         
         arguments = ["f"]
-        assertParseError(try parser._parse(arguments), .UnknownArguments(arguments))
+        assertParseError(try parser._parse(arguments), .unknownArguments(arguments))
 
         arguments = ["-d"]
-        assertParseError(try parser._parse(arguments), .UnknownOption("-d"))
+        assertParseError(try parser._parse(arguments), .unknownOption("-d"))
 
         arguments = ["-f"]
-        assertParseError(try parser._parse(arguments), .MissingValue("foobar"))
+        assertParseError(try parser._parse(arguments), .missingValue("foobar"))
 
         arguments = ["--foobar"]
-        assertParseError(try parser._parse(arguments), .MissingValue("foobar"))
+        assertParseError(try parser._parse(arguments), .missingValue("foobar"))
 
         arguments = ["-f", "Param"]
         try! parser._parse(arguments)
-        XCTAssertEqual(foo.value!, "Param")
+        XCTAssertEqual(foo.v!, "Param")
 
         arguments = ["--foobar", "Param"]
         try! parser._parse(arguments)
-        XCTAssertEqual(foo.value!, "Param")
+        XCTAssertEqual(foo.v!, "Param")
 
         let remainder = parser.remainder("remain", usage: "stuff")
         arguments = ["--foobar", "Param", "Extra", "stuff"]
         try! parser._parse(arguments)
-        XCTAssertEqual(remainder.value, ["Extra", "stuff"])
+        XCTAssertEqual(remainder.v, ["Extra", "stuff"])
     }
 
     
-    private func assertParseError(@autoclosure op: (Void throws -> Void), _ error: OptionParseError, file: StaticString = #file, line: UInt = #line) {
+    fileprivate func assertParseError(_ op: (@autoclosure (Void) throws -> Void), _ error: OptionParseError, file: StaticString = #file, line: UInt = #line) {
         XCTAssertThrowsError(try op(), file: file, line: line) { (producedError) in
             if let parseError = producedError as? OptionParseError {
                 XCTAssertEqual(parseError, error)

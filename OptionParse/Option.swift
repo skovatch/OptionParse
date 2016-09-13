@@ -9,9 +9,9 @@
 import Foundation
 
 public class OptionValue<T> {
-    public var value: T
-    private init(_ value: T) {
-        self.value = value
+    public var v: T
+    fileprivate init(_ value: T) {
+        self.v = value
     }
 }
 
@@ -33,11 +33,11 @@ extension Option {
         lines.append("\t\(descriptor)")
         lines.append(usage.terminalWidthLines(withTabDepth: 2))
         lines.append("")
-        return lines.joinWithSeparator("\n")
+        return lines.joined(separator: "\n")
     }
 
-    func updateValue(val: Value) {
-        value.value = val
+    func update(value: Value) {
+        self.value.v = value
     }
 }
 

@@ -8,12 +8,12 @@
 
 import Foundation
 
-public enum OptionParseError: ErrorType {
-    case NoOptions
-    case MissingValue(String)
-    case MissingArgument(String)
-    case UnknownOption(String)
-    case UnknownArguments([String])
+public enum OptionParseError: Error {
+    case noOptions
+    case missingValue(String)
+    case missingArgument(String)
+    case unknownOption(String)
+    case unknownArguments([String])
 }
 
 public struct OptionParser {
@@ -28,22 +28,22 @@ public struct OptionParser {
     //MARK: Parsing
 
     public func parse(args: [String]? = nil, printUsageOnError: Bool = true) throws {
-        let arguments = args ?? Array(Process.arguments.dropFirst())
+        let arguments = args ?? Array(CommandLine.arguments.dropFirst())
         do {
             try _parse(arguments)
         } catch let error as OptionParseError {
             if printUsageOnError {
                 switch error {
-                case .NoOptions:
+                case .noOptions:
                     printUsage()
-                case .MissingValue(let str):
+                case .missingValue(let str):
                     printUsage(withMessage: "Error: Option '\(str)' requires a value")
-                case .MissingArgument(let str):
+                case .missingArgument(let str):
                     printUsage(withMessage: "Error: Missing required argument '\(str)'")
-                case .UnknownOption(let str):
+                case .unknownOption(let str):
                     printUsage(withMessage: "Error: Unknown option '\(str)'")
-                case .UnknownArguments(let args):
-                    printUsage(withMessage: "Error: Extra arguments: \(args.map{"'\($0)'"}.joinWithSeparator(", "))")
+                case .unknownArguments(let args):
+                    printUsage(withMessage: "Error: Extra arguments: \(args.map{"'\($0)'"}.joined(separator: ", "))")
                 }
             }
             throw error
@@ -55,33 +55,33 @@ public struct OptionParser {
         }
     }
 
-    func _parse(args: [String]? = nil) throws {
-        let arguments = args ?? Array(Process.arguments.dropFirst())
+    func _parse(_ args: [String]? = nil) throws {
+        let arguments = args ?? Array(CommandLine.arguments.dropFirst())
         guard arguments.count > 0 else {
-            throw OptionParseError.NoOptions
+            throw OptionParseError.noOptions
         }
 
         var remaining = try parseTogglesAndFlags(arguments)
         remaining = try parseArguments(remaining)
 
         if remaining.count > 0 {
-            throw OptionParseError.UnknownArguments(remaining)
+            throw OptionParseError.unknownArguments(remaining)
         }
     }
 
     private enum OptionParseType {
-        case Name(String)
-        case ShortName(Character)
-        case Argument(String)
+        case name(String)
+        case shortName(Character)
+        case argument(String)
         
         init(_ str: String) {
             if str.hasPrefix("--") && str.characters.count > 2 {
-                let value = str.substringFromIndex(str.startIndex.advancedBy(2))
-                self = .Name(value)
+                let value = str.substring(from: str.characters.index(str.startIndex, offsetBy: 2))
+                self = .name(value)
             } else if str.hasPrefix("-") && str.characters.count == 2 {
-                self = .ShortName(str.characters.last!)
+                self = .shortName(str.characters.last!)
             } else {
-                self = .Argument(str)
+                self = .argument(str)
             }
         }
     }
@@ -90,7 +90,7 @@ public struct OptionParser {
     private var flags: [String : Flag] = [:]
     private var shortNameMap: [Character : String] = [:]
 
-    mutating public func flag(name: String, shortName: Character? = nil, valueName: String, usage: String) -> OptionValue<String?> {
+    mutating public func flag(_ name: String, shortName: Character? = nil, valueName: String, usage: String) -> OptionValue<String?> {
         guard flags[name] == nil && toggles[name] == nil else {
             fatalError("Duplicate option during setup. This is programmer error")
         }
@@ -102,7 +102,7 @@ public struct OptionParser {
         return flag.value
     }
 
-    mutating public func toggle(name: String, shortName: Character? = nil, usage: String) -> OptionValue<Bool> {
+    mutating public func toggle(_ name: String, shortName: Character? = nil, usage: String) -> OptionValue<Bool> {
         guard flags[name] == nil && toggles[name] == nil else {
             fatalError("Duplicate option during setup. This is programmer error")
         }
@@ -115,34 +115,34 @@ public struct OptionParser {
     }
 
     // Parses toggles and flags, returning any leftover args
-    private func parseTogglesAndFlags(arguments: [String]) throws -> [String] {
+    private func parseTogglesAndFlags(_ arguments: [String]) throws -> [String] {
         var remainingArguments: [String] = []
-        var iterator = arguments.generate()
+        var iterator = arguments.makeIterator()
         while let argString = iterator.next() {
             let arg = OptionParseType(argString)
             let name: String
             switch arg {
-            case .Argument(_):
+            case .argument(_):
                 remainingArguments.append(argString)
                 continue
-            case .ShortName(let val):
+            case .shortName(let val):
                 guard let _ = shortNameMap[val] else {
-                    throw OptionParseError.UnknownOption(argString)
+                    throw OptionParseError.unknownOption(argString)
                 }
                 name = shortNameMap[val]!
-            case .Name(let val):
+            case .name(let val):
                 name = val
             }
 
             if let toggle = toggles[name] {
-                toggle.updateValue(true)
+                toggle.update(value: true)
             } else if let flag = flags[name] {
-                guard let value = iterator.next(), case .Argument(_) = OptionParseType(value) else {
-                    throw OptionParseError.MissingValue(flag.name)
+                guard let value = iterator.next(), case .argument(_) = OptionParseType(value) else {
+                    throw OptionParseError.missingValue(flag.name)
                 }
-                flag.updateValue(value)
+                flag.update(value: value)
             } else {
-                throw OptionParseError.UnknownOption(argString)
+                throw OptionParseError.unknownOption(argString)
             }
         }
         return remainingArguments
@@ -152,33 +152,33 @@ public struct OptionParser {
     private var requiredArguments: [RequiredArgument] = []
     private var optionalArguments: [OptionalArgument] = []
     private var remainder: RemainderArgument? = nil
-    mutating public func required(name: String, usage: String) -> OptionValue<String> {
+    mutating public func required(_ name: String, usage: String) -> OptionValue<String> {
         let arg = RequiredArgument(name: name, usage: usage)
         requiredArguments.append(arg)
         return arg.value
     }
 
-    mutating public func optional(name: String, usage: String) -> OptionValue<String?> {
+    mutating public func optional(_ name: String, usage: String) -> OptionValue<String?> {
         let arg = OptionalArgument(name: name, usage: usage)
         optionalArguments.append(arg)
         return arg.value
     }
 
-    mutating public func remainder(name: String, usage: String) -> OptionValue<[String]> {
+    mutating public func remainder(_ name: String, usage: String) -> OptionValue<[String]> {
         let arg = RemainderArgument(name: name, usage: usage)
         remainder = arg
         return arg.value
     }
 
-    private func parseArguments(arguments: [String]) throws -> [String] {
+    private func parseArguments(_ arguments: [String]) throws -> [String] {
         var remainingArguments = arguments
 
         for argument in requiredArguments {
             guard let argString = remainingArguments.first else {
-                throw OptionParseError.MissingArgument(argument.name)
+                throw OptionParseError.missingArgument(argument.name)
             }
             remainingArguments.removeFirst()
-            argument.updateValue(argString)
+            argument.update(value: argString)
         }
 
         for argument in optionalArguments {
@@ -186,11 +186,11 @@ public struct OptionParser {
                 break
             }
             remainingArguments.removeFirst()
-            argument.updateValue(argString)
+            argument.update(value: argString)
         }
 
         if let remainder = remainder {
-            remainder.updateValue(remainingArguments)
+            remainder.update(value: remainingArguments)
             remainingArguments.removeAll()
         }
 
@@ -221,11 +221,11 @@ public struct OptionParser {
         // First construct the info line
         var msg = "usage: \(name) "
         let components = sampleAndHelpComponents
-        msg += components.map { $0.0 }.joinWithSeparator(" ")
+        msg += components.map { $0.0 }.joined(separator: " ")
         msg += "\n\n\(usage.terminalWidthLines(withTabDepth: 1))\n\n"
 
         // Then the detailed messages
-        msg += components.map { $0.1 }.joinWithSeparator("\n")
+        msg += components.map { $0.1 }.joined(separator: "\n")
         return msg
     }
 }
@@ -236,14 +236,14 @@ extension String {
         var remainingString = self
         var lines: [String] = []
         while remainingString.characters.count > 80 {
-            guard let range = remainingString.rangeOfCharacterFromSet(NSCharacterSet.whitespaceCharacterSet(), options: .BackwardsSearch, range: remainingString.startIndex..<remainingString.startIndex.advancedBy(80)) else {
+            guard let range = remainingString.rangeOfCharacter(from: CharacterSet.whitespaces, options: .backwards, range: remainingString.startIndex..<remainingString.characters.index(remainingString.startIndex, offsetBy: 80)) else {
                 lines.append(remainingString)
                 remainingString = ""
                 break
             }
 
-            lines.append(remainingString.substringToIndex(range.startIndex))
-            remainingString = remainingString.substringFromIndex(range.endIndex)
+            lines.append(remainingString.substring(to: range.lowerBound))
+            remainingString = remainingString.substring(from: range.upperBound)
         }
 
         if !remainingString.isEmpty {
@@ -252,6 +252,6 @@ extension String {
 
 
 
-        return lines.map { Repeat(count: tabDepth, repeatedValue: "\t").joinWithSeparator("") + $0 }.joinWithSeparator("\n")
+        return lines.map { repeatElement("\t", count: tabDepth).joined(separator: "") + $0 }.joined(separator: "\n")
     }
 }
