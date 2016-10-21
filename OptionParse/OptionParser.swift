@@ -207,8 +207,14 @@ public struct OptionParser {
 
     private var sampleAndHelpComponents: [(String, String)] {
         var samples: [(String, String)] = []
-        samples += toggles.values.map { ($0.sample, $0.helpMessage) }
-        samples += flags.values.map { ($0.sample, $0.helpMessage) }
+
+        // Sort toggles and flags for usage since there is no other defined 'order' for these types of options
+        var keyedOptions: [(String, String, String)] = []
+        keyedOptions += toggles.values.map { ($0.name, $0.sample, $0.helpMessage) }
+        keyedOptions += flags.values.map { ($0.name, $0.sample, $0.helpMessage) }
+        keyedOptions.sort(by: { opt1, opt2 in opt1.0 < opt2.0 })
+
+        samples += keyedOptions.map { (_, sample, help) in (sample, help) }
         samples += requiredArguments.map { ($0.sample, $0.helpMessage) }
         samples += optionalArguments.map { ($0.sample, $0.helpMessage) }
         if let remainder = remainder {
