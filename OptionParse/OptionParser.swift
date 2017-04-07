@@ -205,6 +205,11 @@ public struct OptionParser {
         print(usageMessage)
     }
 
+    public func exitAndPrintUsage(_ msg: String? = nil) -> Never {
+        printUsage(withMessage: msg)
+        exit(1)
+    }
+
     private var sampleAndHelpComponents: [(String, String)] {
         var samples: [(String, String)] = []
 
