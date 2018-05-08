@@ -75,11 +75,11 @@ public struct OptionParser {
         case argument(String)
         
         init(_ str: String) {
-            if str.hasPrefix("--") && str.characters.count > 2 {
-                let value = str.substring(from: str.characters.index(str.startIndex, offsetBy: 2))
+            if str.hasPrefix("--") && str.count > 2 {
+                let value = String(str[str.index(str.startIndex, offsetBy: 2)...])
                 self = .name(value)
-            } else if str.hasPrefix("-") && str.characters.count == 2 {
-                self = .shortName(str.characters.last!)
+            } else if str.hasPrefix("-") && str.count == 2 {
+                self = .shortName(str.last!)
             } else {
                 self = .argument(str)
             }
@@ -246,15 +246,15 @@ extension String {
     func terminalWidthLines(withTabDepth tabDepth: Int) -> String {
         var remainingString = self
         var lines: [String] = []
-        while remainingString.characters.count > 80 {
-            guard let range = remainingString.rangeOfCharacter(from: CharacterSet.whitespaces, options: .backwards, range: remainingString.startIndex..<remainingString.characters.index(remainingString.startIndex, offsetBy: 80)) else {
+        while remainingString.count > 80 {
+            guard let range = remainingString.rangeOfCharacter(from: CharacterSet.whitespaces, options: .backwards, range: remainingString.startIndex..<remainingString.index(remainingString.startIndex, offsetBy: 80)) else {
                 lines.append(remainingString)
                 remainingString = ""
                 break
             }
 
-            lines.append(remainingString.substring(to: range.lowerBound))
-            remainingString = remainingString.substring(from: range.upperBound)
+            lines.append(String(remainingString[..<range.lowerBound]))
+            remainingString = String(remainingString[range.upperBound...])
         }
 
         if !remainingString.isEmpty {
